@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oefentoets IT Fundamentals (Week 1-7)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .quiz-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-width: 700px;
+            width: 95%;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 1.8rem;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+            height: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            font-size: 1rem;
+            color: #333;
+        }
+        .btn:hover:not([disabled]) {
+            background-color: #e2e6ea;
+            border-color: #dae0e5;
+        }
+        .btn.correct {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .btn.wrong {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+            line-height: 1.5;
+        }
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+        #next-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: none;
+        }
+        #next-btn:hover {
+            background-color: #0056b3;
+        }
+        .score-board {
+            text-align: center;
+            display: none;
+        }
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            margin: 0 auto 2rem auto;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container" id="quiz-box">
+    <h1>IT Fundamentals Toets</h1>
+    
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <p id="progress-text" style="text-align:right; font-size:0.9rem; color:#666; margin-top:-10px; margin-bottom:15px;">Vraag 1 van 50</p>
+
+    <div id="question-container">
+        <p class="question" id="question">Laden...</p>
+        <div id="answer-buttons"></div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <div class="controls">
+        <button id="next-btn" onclick="nextQuestion()">Volgende</button>
+    </div>
+</div>
+
+<div class="quiz-container score-board" id="score-container">
+    <h2>Toets Voltooid!</h2>
+    <div class="score-circle">
+        <span id="score"></span>/<span id="total"></span>
+    </div>
+    <p id="score-message"></p>
+    <button class="btn" style="background:#007bff; color:white; text-align:center; border:none;" onclick="location.reload()">Toets opnieuw starten</button>
+</div>
+
+<script>
+    const questions = [
+        { q: "Wat is de binaire representatie van het decimale getal 9?", a: [{text:"1001", c:true, r:"Correct: 8 + 0 + 0 + 1 = 9."}, {text:"1010", c:false, r:"Fout: Dit is 10 (8+2)."}, {text:"1100", c:false, r:"Fout: Dit is 12 (8+4)."}, {text:"0111", c:false, r:"Fout: Dit is 7 (4+2+1)."}] },
+        { q: "Hoeveel bits zitten er in één Byte?", a: [{text:"4", c:false, r:"4 bits is een nibble."}, {text:"8", c:true, r:"Correct, 1 Byte = 8 bits."}, {text:"16", c:false, r:"16 bits wordt vaak een 'word' genoemd."}, {text:"32", c:false, r:"32 bits is een double word."}] },
+        { q: "Welk talstelsel gebruikt de cijfers 0 t/m 9 en de letters A t/m F?", a: [{text:"Binair", c:false, r:"Binair gebruikt alleen 0 en 1."}, {text:"Octaal", c:false, r:"Octaal gebruikt 0 t/m 7."}, {text:"Decimaal", c:false, r:"Decimaal gebruikt 0 t/m 9."}, {text:"Hexadecimaal", c:true, r:"Correct, dit is het 16-tallig stelsel."}] },
+        { q: "Wat is de functie van de ASCII-tabel?", a: [{text:"Omzetten van assembly naar machinecode", c:false, r:"Dat doet een assembler."}, {text:"Het koppelen van karakters aan numerieke waarden", c:true, r:"Correct, bijv. 'A' = 65."}, {text:"Geheugenadressen beheren", c:false, r:"Dat doet het OS."}, {text:"IP-adressen vertalen", c:false, r:"Dat doet DNS."}] },
+        { q: "Welke kleuren worden gebruikt in het RGB-model?", a: [{text:"Rood, Geel, Blauw", c:false, r:"Dit is voor verf."}, {text:"Rood, Groen, Blauw", c:true, r:"Correct (Red, Green, Blue)."}, {text:"Cyaan, Magenta, Geel, Zwart", c:false, r:"Dit is CMYK (printen)."}, {text:"Zwart, Wit, Grijs", c:false, r:"Dit zijn grijstinten."}] },
+        { q: "Wat betekent MSB in binaire getallen?", a: [{text:"Most Significant Byte", c:false, r:""}, {text:"Most Significant Bit", c:true, r:"Correct, de meest linkse bit met de hoogste waarde."}, {text:"Main System Bus", c:false, r:""}, {text:"Memory Storage Block", c:false, r:""}] },
+        { q: "Welke logische poort geeft ALLEEN een 1 als BEIDE ingangen 1 zijn?", a: [{text:"OR", c:false, r:"OR geeft ook 1 als één ingang 1 is."}, {text:"XOR", c:false, r:"XOR geeft 0 als beide 1 zijn."}, {text:"AND", c:true, r:"Correct."}, {text:"NAND", c:false, r:"NAND geeft 0 als beide 1 zijn."}] },
+        { q: "Wat is de output van een NOT-poort als de input 1 is?", a: [{text:"1", c:false, r:""}, {text:"0", c:true, r:"Correct, NOT keert het signaal om."}, {text:"10", c:false, r:""}, {text:"Onbepaald", c:false, r:""}] },
+        { q: "Welke logische operatie wordt gebruikt om binaire getallen op te tellen (de som zonder carry)?", a: [{text:"AND", c:false, r:"AND berekent de carry."}, {text:"OR", c:false, r:""}, {text:"XOR", c:true, r:"Correct, XOR is de 'Sum' van een Half Adder."}, {text:"NOT", c:false, r:""}] },
+        { q: "Wat is Two's Complement?", a: [{text:"Een tekstcodering", c:false, r:""}, {text:"Een manier om negatieve binaire getallen weer te geven", c:true, r:"Correct."}, {text:"Een netwerkprotocol", c:false, r:""}, {text:"Een logische poort", c:false, r:""}] },
+        { q: "Wat doet de bitwise operator << 1?", a: [{text:"Deelt door 2", c:false, r:""}, {text:"Vermenigvuldigt met 2", c:true, r:"Correct (Left shift)."}, {text:"Keert bits om", c:false, r:""}, {text:"Zet op 0", c:false, r:""}] },
+        { q: "Wat is een kenmerk van de Von Neumann-architectuur?", a: [{text:"Gescheiden geheugen voor data/instructies", c:false, r:"Dat is Harvard architectuur."}, {text:"Data en instructies in hetzelfde geheugen", c:true, r:"Correct."}, {text:"Geen CPU", c:false, r:""}, {text:"Analoge signalen", c:false, r:""}] },
+        { q: "Welk onderdeel van de CPU voert berekeningen uit?", a: [{text:"Control Unit (CU)", c:false, r:""}, {text:"Registers", c:false, r:""}, {text:"Arithmetic Logic Unit (ALU)", c:true, r:"Correct."}, {text:"Cache", c:false, r:""}] },
+        { q: "Wat is de functie van de Control Unit (CU)?", a: [{text:"Data opslaan", c:false, r:""}, {text:"Instructies decoderen en componenten aansturen", c:true, r:"Correct."}, {text:"Berekeningen uitvoeren", c:false, r:"Dat doet de ALU."}, {text:"Internetverbinding beheren", c:false, r:""}] },
+        { q: "Welk type geheugen is het snelst?", a: [{text:"Harde schijf", c:false, r:""}, {text:"RAM", c:false, r:""}, {text:"Registers", c:true, r:"Correct, deze zitten in de processor."}, {text:"L1 Cache", c:false, r:"Registers zijn nog sneller dan L1."}] },
+        { q: "Wat beschrijft de Wet van Moore?", a: [{text:"Internetsnelheid verdubbelt elke 18 mnd", c:false, r:""}, {text:"Aantal transistors op een chip verdubbelt elke 2 jaar", c:true, r:"Correct."}, {text:"Prijs halveert elk jaar", c:false, r:""}, {text:"Software wordt trager", c:false, r:""}] },
+        { q: "Wat is het verschil tussen RAM en ROM?", a: [{text:"RAM is vluchtig, ROM niet", c:true, r:"Correct (RAM leeg zonder stroom)."}, {text:"RAM is langzamer", c:false, r:"RAM is veel sneller."}, {text:"ROM voor programma's, RAM voor opslag", c:false, r:""}, {text:"Geen verschil", c:false, r:""}] },
+        { q: "Wat is de functie van de Address Bus?", a: [{text:"Data transporteren", c:false, r:"Dat doet de Data Bus."}, {text:"Locatie in geheugen aangeven", c:true, r:"Correct."}, {text:"Besturingssignalen sturen", c:false, r:"Dat doet de Control Bus."}, {text:"Stroom leveren", c:false, r:""}] },
+        { q: "Wat is machinecode?", a: [{text:"Java code", c:false, r:""}, {text:"Binaire instructies die de CPU direct uitvoert", c:true, r:"Correct."}, {text:"Leesbare tekst", c:false, r:""}, {text:"Scripttaal", c:false, r:""}] },
+        { q: "Wat doet een compiler?", a: [{text:"Voert code regel voor regel uit", c:false, r:"Dat is een interpreter."}, {text:"Vertaalt volledige broncode naar machinecode", c:true, r:"Correct."}, {text:"Beheert geheugen", c:false, r:""}, {text:"Schrijft code", c:false, r:""}] },
+        { q: "Wat is een voordeel van High-Level talen?", a: [{text:"Sneller voor de CPU", c:false, r:""}, {text:"Directe hardware controle", c:false, r:""}, {text:"Makkelijker te lezen voor mensen", c:true, r:"Correct."}, {text:"Geen vertaling nodig", c:false, r:""}] },
+        { q: "Wat is bytecode?", a: [{text:"Machinecode", c:false, r:""}, {text:"Tussencode voor een Virtual Machine", c:true, r:"Correct (bijv. Java JVM)."}, {text:"C broncode", c:false, r:""}, {text:"Bits", c:false, r:""}] },
+        { q: "Wat is de taak van de Kernel?", a: [{text:"Grafische interface", c:false, r:""}, {text:"Hardware en bronnen beheren", c:true, r:"Correct."}, {text:"Webapps draaien", c:false, r:""}, {text:"Compileren", c:false, r:""}] },
+        { q: "Waarom draaien applicaties in User Mode?", a: [{text:"Veiligheid en stabiliteit", c:true, r:"Correct, voorkomt dat apps het systeem crashen."}, {text:"Snelheid", c:false, r:""}, {text:"Geen hardware nodig", c:false, r:""}, {text:"Kernel kan geen apps draaien", c:false, r:""}] },
+        { q: "Verschil Process vs Thread?", a: [{text:"Threads delen geheugen, processen zijn geïsoleerd", c:true, r:"Correct."}, {text:"Proces is sneller", c:false, r:""}, {text:"Proces gebruikt geen CPU", c:false, r:""}, {text:"Geen verschil", c:false, r:""}] },
+        { q: "Wat doet virtueel geheugen?", a: [{text:"CPU versnellen", c:false, r:""}, {text:"Harde schijf gebruiken als extra RAM", c:true, r:"Correct (swap file)."}, {text:"Opslag in de cloud", c:false, r:""}, {text:"L1 cache vervangen", c:false, r:""}] },
+        { q: "Wat is een Device Driver?", a: [{text:"Gereedschap", c:false, r:""}, {text:"Software tussen OS en hardware", c:true, r:"Correct."}, {text:"Bestuurder", c:false, r:""}, {text:"Hardware onderdeel", c:false, r:""}] },
+        { q: "Kenmerk van Linux bestandssysteem?", a: [{text:"Gebruikt C: en D:", c:false, r:""}, {text:"Begint bij root /", c:true, r:"Correct."}, {text:"Niet hoofdlettergevoelig", c:false, r:""}, {text:"Gebruikt backslashes", c:false, r:""}] },
+        { q: "Waarvoor dient een IP-adres?", a: [{text:"Fysieke locatie bepalen", c:false, r:""}, {text:"Unieke identificatie in een netwerk", c:true, r:"Correct."}, {text:"Snelheid meten", c:false, r:""}, {text:"Virussen stoppen", c:false, r:""}] },
+        { q: "Wat doet een DNS-server?", a: [{text:"IPs uitdelen", c:false, r:"Dat is DHCP."}, {text:"Domeinnamen vertalen naar IP-adressen", c:true, r:"Correct."}, {text:"Verbinding beveiligen", c:false, r:""}, {text:"Websites hosten", c:false, r:""}] },
+        { q: "Protocol voor automatisch IP toewijzen?", a: [{text:"HTTP", c:false, r:""}, {text:"DNS", c:false, r:""}, {text:"DHCP", c:true, r:"Correct."}, {text:"FTP", c:false, r:""}] },
+        { q: "Kenmerk van TCP t.o.v. UDP?", a: [{text:"TCP is sneller", c:false, r:"UDP is sneller."}, {text:"TCP is betrouwbaar (garantie)", c:true, r:"Correct."}, {text:"TCP is connectionless", c:false, r:""}, {text:"Geen verschil", c:false, r:""}] },
+        { q: "Voorbeeld van een Private IP?", a: [{text:"8.8.8.8", c:false, r:""}, {text:"192.168.1.10", c:true, r:"Correct."}, {text:"1.1.1.1", c:false, r:""}, {text:"256.0.0.1", c:false, r:"Ongeldig IP."}] },
+        { q: "Wat doet een Subnet Mask?", a: [{text:"Verbergt IP", c:false, r:""}, {text:"Scheidt netwerkdeel en hostdeel van IP", c:true, r:"Correct."}, {text:"Versnelt internet", c:false, r:""}, {text:"Genereert IPs", c:false, r:""}] },
+        { q: "Standaard poort voor onbeveiligd HTTP?", a: [{text:"22", c:false, r:""}, {text:"80", c:true, r:"Correct."}, {text:"443", c:false, r:"Dit is HTTPS."}, {text:"25", c:false, r:""}] },
+        { q: "Wat is IaaS?", a: [{text:"Infrastructure as a Service", c:true, r:"Correct (virtuele hardware huren)."}, {text:"Internet as a Service", c:false, r:""}, {text:"Intelligence as a Service", c:false, r:""}, {text:"Information as a Service", c:false, r:""}] },
+        { q: "Welk Cloud model is Gmail?", a: [{text:"IaaS", c:false, r:""}, {text:"PaaS", c:false, r:""}, {text:"SaaS", c:true, r:"Correct (Software as a Service)."}, {text:"FaaS", c:false, r:""}] },
+        { q: "Verschil Type 1 en Type 2 Hypervisor?", a: [{text:"Type 1 draait direct op hardware (Bare Metal)", c:true, r:"Correct."}, {text:"Type 2 is sneller", c:false, r:""}, {text:"Type 1 kan alleen Linux draaien", c:false, r:""}, {text:"Geen verschil", c:false, r:""}] },
+        { q: "Voordeel van Containers (zoals Docker) vs VMs?", a: [{text:"Hebben eigen kernel nodig", c:false, r:""}, {text:"Lichter en sneller", c:true, r:"Correct, ze delen de kernel."}, {text:"Veiliger", c:false, r:"VMs zijn doorgaans veiliger door isolatie."}, {text:"Hardware emulatie", c:false, r:""}] },
+        { q: "Wat is een Native App?", a: [{text:"Draait in browser", c:false, r:""}, {text:"Specifiek gemaakt voor 1 platform (iOS/Android)", c:true, r:"Correct."}, {text:"Cross-platform", c:false, r:""}, {text:"Cloud app", c:false, r:""}] },
+        { q: "Informatie eenheid in quantumcomputer?", a: [{text:"Bit", c:false, r:""}, {text:"Qubit", c:true, r:"Correct."}, {text:"Byte", c:false, r:""}, {text:"Pixel", c:false, r:""}] },
+        { q: "Voordeel van Cloud Computing?", a: [{text:"Altijd internet nodig", c:false, r:"Dat is een nadeel."}, {text:"Schaalbaarheid en pay-as-you-go", c:true, r:"Correct."}, {text:"Fysieke controle", c:false, r:""}, {text:"Trager", c:false, r:""}] },
+        { q: "Apparaat dat verschillende netwerken verbindt?", a: [{text:"Switch", c:false, r:""}, {text:"Router", c:true, r:"Correct."}, {text:"Hub", c:false, r:""}, {text:"Repeater", c:false, r:""}] },
+        { q: "Binaire waarde van Hexadecimaal F?", a: [{text:"1010", c:false, r:""}, {text:"1111", c:true, r:"Correct (Decimaal 15)."}, {text:"1000", c:false, r:""}, {text:"1100", c:false, r:""}] },
+        { q: "Functie van een Interpreter?", a: [{text:"Vertaalt code regel voor regel tijdens uitvoer", c:true, r:"Correct."}, {text:"Maakt een .exe", c:false, r:"Dat doet een compiler."}, {text:"Beheert database", c:false, r:""}, {text:"Verbindt netwerk", c:false, r:""}] },
+        { q: "Wat is AI?", a: [{text:"Rekenmachine", c:false, r:""}, {text:"Simulatie van menselijke intelligentie in machines", c:true, r:"Correct."}, {text:"Internet", c:false, r:""}, {text:"Programmeertaal", c:false, r:""}] },
+        { q: "Verschil CISC en RISC?", a: [{text:"CISC complex, RISC simpel", c:true, r:"Correct."}, {text:"RISC is ouder", c:false, r:""}, {text:"CISC alleen voor telefoons", c:false, r:""}, {text:"Geen verschil", c:false, r:""}] },
+        { q: "Welke TCP/IP laag regelt fysieke verbinding?", a: [{text:"Application", c:false, r:""}, {text:"Link Layer", c:true, r:"Correct (kabels, wifi)."}, {text:"Internet", c:false, r:""}, {text:"Transport", c:false, r:""}] },
+        { q: "Functie van een Bus in een PC?", a: [{text:"Koelen", c:false, r:""}, {text:"Data transporteren tussen componenten", c:true, r:"Correct."}, {text:"Opslaan", c:false, r:""}, {text:"Stroom leveren", c:false, r:""}] },
+        { q: "Uitkomst binaire som 10 + 11?", a: [{text:"100", c:false, r:"2+3=5 (100 is 4)."}, {text:"101", c:true, r:"Correct: 2 + 3 = 5 (101)."}, {text:"21", c:false, r:"Binair kent geen 2."}, {text:"111", c:false, r:"Dat is 7."}] }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let userAnswers = new Array(questions.length).fill(null);
+
+    const questionElement = document.getElementById('question');
+    const answerButtonsElement = document.getElementById('answer-buttons');
+    const nextButton = document.getElementById('next-btn');
+    const progressText = document.getElementById('progress-text');
+    const progressFill = document.getElementById('progress-fill');
+    const feedbackElement = document.getElementById('feedback');
+    const quizBox = document.getElementById('quiz-box');
+    const scoreContainer = document.getElementById('score-container');
+    const scoreElement = document.getElementById('score');
+    const totalElement = document.getElementById('total');
+    const scoreMessage = document.getElementById('score-message');
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        showQuestion();
+    }
+
+    function showQuestion() {
+        resetState();
+        let currentQuestion = questions[currentQuestionIndex];
+        let questionNo = currentQuestionIndex + 1;
+        
+        // Update tekst en progress
+        questionElement.innerText = questionNo + ". " + currentQuestion.q;
+        progressText.innerText = `Vraag ${questionNo} van ${questions.length}`;
+        let progressPercent = ((questionNo - 1) / questions.length) * 100;
+        progressFill.style.width = progressPercent + "%";
+
+        // Maak knoppen
+        currentQuestion.a.forEach(answer => {
+            const button = document.createElement('button');
+            button.innerText = answer.text;
+            button.classList.add('btn');
+            button.addEventListener('click', () => selectAnswer(button, answer));
+            answerButtonsElement.appendChild(button);
+        });
+    }
+
+    function resetState() {
+        nextButton.style.display = 'none';
+        feedbackElement.style.display = 'none';
+        while (answerButtonsElement.firstChild) {
+            answerButtonsElement.removeChild(answerButtonsElement.firstChild);
+        }
+    }
+
+    function selectAnswer(selectedBtn, answer) {
+        // Disable alle knoppen na keuze
+        Array.from(answerButtonsElement.children).forEach(button => {
+            button.disabled = true;
+            // Toon de juiste (ook als je fout zat)
+            // We moeten de juiste vinden in de data, of via logica
+            // Hier check ik de tekst of property in de lijst, maar eenvoudiger:
+            // Ik loop door de 'questions' data heen. Of ik geef de data mee aan de button.
+        });
+
+        // Check of het gekozen antwoord goed is
+        const isCorrect = answer.c;
+        if(isCorrect) {
+            selectedBtn.classList.add('correct');
+            score++;
+            feedbackElement.innerHTML = `<strong>Goed!</strong> ${answer.r}`;
+            feedbackElement.style.backgroundColor = '#d4edda';
+            feedbackElement.style.color = '#155724';
+            feedbackElement.style.border = '1px solid #c3e6cb';
+        } else {
+            selectedBtn.classList.add('wrong');
+            feedbackElement.innerHTML = `<strong>Fout.</strong> ${answer.r}`;
+            feedbackElement.style.backgroundColor = '#f8d7da';
+            feedbackElement.style.color = '#721c24';
+            feedbackElement.style.border = '1px solid #f5c6cb';
+            
+            // Highlight de juiste knop
+            // Omdat we 'answer' object hebben, weten we de juiste niet direct van de button elementen
+            // We moeten loopen door buttons en kijken welke tekst matcht met een correct antwoord.
+            const currentQ = questions[currentQuestionIndex];
+            const correctAns = currentQ.a.find(a => a.c === true);
+            
+            Array.from(answerButtonsElement.children).forEach(btn => {
+                if(btn.innerText === correctAns.text) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
+
+        feedbackElement.style.display = 'block';
+        nextButton.style.display = 'block';
+        
+        // Update progress bar visueel naar 'voltooid' voor deze stap
+        let progressPercent = ((currentQuestionIndex + 1) / questions.length) * 100;
+        progressFill.style.width = progressPercent + "%";
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            showQuestion();
+        } else {
+            showScore();
+        }
+    }
+
+    function showScore() {
+        quizBox.style.display = 'none';
+        scoreContainer.style.display = 'block';
+        scoreElement.innerText = score;
+        totalElement.innerText = questions.length;
+        
+        let percentage = (score / questions.length) * 100;
+        if(percentage >= 80) {
+            scoreMessage.innerText = "Fantastisch gedaan! Je bent klaar voor het examen.";
+        } else if(percentage >= 55) {
+            scoreMessage.innerText = "Goed bezig! Je hebt een voldoende.";
+        } else {
+            scoreMessage.innerText = "Blijf oefenen, je komt er wel!";
+        }
+    }
+
+    // Start de quiz bij laden
+    startQuiz();
+
+</script>
+
+</body>
+</html>
